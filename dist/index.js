@@ -18,7 +18,8 @@ try {
 
   const fname = core.getInput('file-name') 
   console.log(`The filename is ${fname}`);
-  const json_data = require(`./${input}`);
+  const json_data = require(`./${fname}`);
+  console.log(json_data);
 
 } catch (error) {
   core.setFailed(error.message);
