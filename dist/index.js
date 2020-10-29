@@ -7,27 +7,117 @@ module.exports =
 
 const core = __webpack_require__(24);
 const github = __webpack_require__(16);
-const { execSync } = __webpack_require__(129);
 
+//try {
+//  // `who-to-greet` input defined in action metadata file
+//  const time = (new Date()).toTimeString();
+//  core.setOutput("time", time);
+//  // Get the JSON webhook payload for the event that triggered the workflow
+//  const payload = JSON.stringify(github.context.payload, undefined, 2)
+//  console.log(`The event payload: ${payload}`);
+//
+//  const fname = core.getInput('file-name') 
+//  console.log(`The filename is ${fname}`);
+//
+//  const output = execSync(`ls -l ./`);
+//  const json_data = require(`${process.env.GITHUB_WORKSPACE}/${fname}`);
+//  console.log(json_data);
+//
+//} catch (error) {
+//  core.setFailed(error.message);
+//}
 
 try {
-  // `who-to-greet` input defined in action metadata file
-  const time = (new Date()).toTimeString();
-  core.setOutput("time", time);
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2)
-  console.log(`The event payload: ${payload}`);
-
   const fname = core.getInput('file-name') 
-  console.log(`The filename is ${fname}`);
-
-  const output = execSync(`ls -l ./`);
   const json_data = require(`${process.env.GITHUB_WORKSPACE}/${fname}`);
-  console.log(json_data);
+  let markDownString = '';
 
+  const getSeverityString = (input) => {
+    const severities = {
+      high:   `![#b51b72](https://via.placeholder.com/15/b51b72/000000?text=+) \`High\``,
+      medium: `![#e29022](https://via.placeholder.com/15/e29022/000000?text=+) \`Medium\``,
+      low:    `![#222049](https://via.placeholder.com/15/222049/000000?text=+) \`Low\``,
+    }
+
+    return severities.hasOwnProperty(input.severity)
+      ? `${severities[input.severity]} severity found in \`${input.name}\``
+      : `Unknown severity found in ${input.name}`
+  };
+
+  let vulnTracker = new Set();
+  const vulnOutput = json_data.vulnerabilities.reduce((acc, curr) => {
+    let tempStr = '';
+    if (!vulnTracker.has(curr.title)) {
+      tempStr+=(`#### ${getSeverityString(curr)}`);
+      tempStr+=(`\n**Description**: [${curr.title}](https://snyk.io/vuln/${curr.id}) `);
+      tempStr+=(`\\\n**Introduced through**: ${curr.from.join(' -> ')}`);
+      tempStr+=(`\\\n**Introduced by** your base image (${curr.dockerBaseImage})`);
+      if (curr.nearestFixedInVersion) tempStr+= (`\\\n\`Fix available\` in: ${curr.nearestFixedInVersion} `)
+
+      tempStr+=(`\n\n`);
+    }
+    vulnTracker.add(curr.title);
+    return acc + tempStr;
+  }, '');
+
+  markDownString+=(
+    `\n\nTested ${json_data.dependencyCount} dependencies for ` +
+    `known issues, found *${json_data.uniqueCount}* ` + 
+    `${json_data.uniqueCount > 1 ? 'issues' : 'issue'}.\n\n` +
+    `<details>
+  <summary>Click to see details</summary>\n
+`);
+
+  markDownString+=(vulnOutput);
+
+
+  /* Ok, lets grab the remediation advice. We pretty much need to split up the 
+   * message strings and determine if theres 5 or more spaces in between */
+  const isMessageTable = (input)  => (!!input.match(/\s{2}/));
+  const advisoryTable = json_data.docker.baseImageRemediation.advice;
+  const convertAdvisoryToArray = message =>
+    message
+      .split(/\s{2,}/g)
+      .reduce((acc, curr) => [...acc, ...curr.split("\n")], [])
+      .filter(x => x);
+
+  const convertArrayToMarkdownTable = (arr) => {
+    const [base, vuln, sev, ...rest] = arr;
+    const [b, count, stats] = rest;
+    const str = [``,
+      `${base} | ${vuln} | ${sev}`,
+      `:--- | :--- | :---`,
+      `${b} | ${count} | ${stats}\n`
+    ].map((x) => `${x}\n`).join('');
+    return str;
+  };
+
+  advisoryTable.map((x, idx) => { 
+    if (isMessageTable(x.message)) {
+      const arr = convertAdvisoryToArray(x.message);
+      const table = convertArrayToMarkdownTable(arr);
+      markDownString+=(table);
+    }
+    else if (x.bold) {
+      markDownString+=(`\n\n**${x.message.replace('\n', '')}**\n`);
+    }
+  });
+
+  markDownString+=(`</details>`);
+  core.setOutput("vuln-text", markDownString);
+
+  markDownString = process.env.RAW_TEXT
+    ? markDownString
+    : markDownString
+    .replace(/%/gm, "%25")
+    .replace(/\n/gm, "%0A")
+    .replace(/\r/gm, "%0D");
+
+  (vulnOutput.length > 1)  ? console.log(markDownString) : console.log("")
 } catch (error) {
   core.setFailed(error.message);
 }
+
 
 
 /***/ }),
@@ -5831,14 +5921,6 @@ module.exports = eval("require")("encoding");
 
 "use strict";
 module.exports = require("assert");
-
-/***/ }),
-
-/***/ 129:
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("child_process");
 
 /***/ }),
 
