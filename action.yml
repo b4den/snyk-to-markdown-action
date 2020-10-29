@@ -1,0 +1,9 @@
+name: 'Snyk-to-markdown'
+description: 'Converts snyk.json to its markdown equivalent format'
+inputs:
+  file-name:
+    description: 'The name of the file'
+    required: true
+runs:
+  using: 'node12'
+  main: 'dist/index.js'
