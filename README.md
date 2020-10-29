@@ -11,6 +11,7 @@ One such example is to use this in conjunction with [snyk][snyk] test/monitor an
 
 ![gh-action](./docs/images/snyk-output.png)
 
+### .github/workflows/snyk-action.yml sample
 ```
 name: Snyk container scans
 on:
@@ -59,7 +60,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         message: "${{ steps.snyk_results.outputs.vuln_text }}"
-        check-for-duplicates: false
 ```
 
 ## Inputs
