@@ -104,7 +104,7 @@ try {
   });
 
   markDownString+=(`</details>`);
-  core.setOutput("vuln-text", markDownString);
+  core.setOutput("vuln_text", markDownString);
 
   markDownString = process.env.RAW_TEXT
     ? markDownString
