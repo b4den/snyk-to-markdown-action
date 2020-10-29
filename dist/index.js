@@ -7,6 +7,8 @@ module.exports =
 
 const core = __webpack_require__(24);
 const github = __webpack_require__(16);
+const { execSync } = __webpack_require__(129);
+
 
 try {
   // `who-to-greet` input defined in action metadata file
@@ -18,7 +20,9 @@ try {
 
   const fname = core.getInput('file-name') 
   console.log(`The filename is ${fname}`);
-  const json_data = require(`./${fname}`);
+
+  const output = execSync(`ls -l ./`);
+  const json_data = require(`${process.env.GITHUB_WORKSPACE}/${fname}`);
   console.log(json_data);
 
 } catch (error) {
@@ -5827,6 +5831,14 @@ module.exports = eval("require")("encoding");
 
 "use strict";
 module.exports = require("assert");
+
+/***/ }),
+
+/***/ 129:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("child_process");
 
 /***/ }),
 

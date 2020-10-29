@@ -1,5 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const { execSync } = require('child_process');
+
 
 try {
   // `who-to-greet` input defined in action metadata file
@@ -11,7 +13,10 @@ try {
 
   const fname = core.getInput('file-name') 
   console.log(`The filename is ${fname}`);
-  const json_data = require(`./${input}`);
+
+  const output = execSync(`ls -l ./`);
+  const json_data = require(`${process.env.GITHUB_WORKSPACE}/${fname}`);
+  console.log(json_data);
 
 } catch (error) {
   core.setFailed(error.message);
