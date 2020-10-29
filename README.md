@@ -6,6 +6,10 @@ Takes a `snyk.json` output file and transforms it into human readable markdown. 
 
 ### `input-file`
 
-**Required** The location of your input file. Default `./snyk.json`.
+**Required** The location of your input file. Default `snyk.json`.
 
+## Outputs
 
+### `vuln_text`
+
+The markdown formatted text

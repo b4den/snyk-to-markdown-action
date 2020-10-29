@@ -2,8 +2,12 @@ name: 'Snyk-to-markdown'
 description: 'Converts snyk.json to its markdown equivalent format'
 inputs:
   file-name:
-    description: 'The name of the file'
+    description: 'The name of the snyk file'
     required: true
+    default: snyk.json
+outputs:
+  vuln_text:
+    description: 'The markdown formatted text for docker container results'
 runs:
   using: 'node12'
   main: 'dist/index.js'
